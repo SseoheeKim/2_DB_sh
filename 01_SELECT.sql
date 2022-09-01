@@ -357,3 +357,33 @@ SELECT EMP_NAME, DEPT_CODE, SALARY
 FROM EMPLOYEE
 ORDER BY DEPT_CODE, SALARY DESC;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
