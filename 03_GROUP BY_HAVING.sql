@@ -33,8 +33,8 @@ FROM EMPLOYEE
 GROUP BY DEPT_CODE; --> DEPT_CODE가 같은 행끼리 하나의 그룹화하여 급여 합 조회 가능
 
 
--- EMPLOYEE 테이블에서 직급 코드가 같은 사람의 직급 코드, 급여 평균, 인원수를 직급코드 오름차순으로 조회
-SELECT JOB_CODE, ROUND(AVG(SALARY)) 급여 평균, COUNT(*)
+-- EMPLOYEE 테이블에서 직급 코드가 같은 사람의 직급 코드, 급여 평균, 인원 수를 직급코드 오름차순으로 조회
+SELECT JOB_CODE, ROUND(AVG(SALARY)) "급여 평균", COUNT(*) "인원 수"
 FROM EMPLOYEE
 GROUP BY JOB_CODE
 ORDER BY JOB_CODE;
@@ -136,3 +136,110 @@ ORDER BY 1;
 
 
 
+--------------------------------------------------------------------------------
+
+/* 집계함수(ROLLUP, CUBE)
+ 
+ - 그룹별 산출 결과 값의 집계를 계산하는 함수
+   (그룹별로 중간 집계 결과를 추가)
+   
+ - GROUP BY절에서만 함께 사용 */
+
+
+
+/* ROLLUP
+ GROUP BY 절에서 가장 먼저 작성된 컬럼의 중간 집계를 처리 */
+
+SELECT DEPT_CODE , JOB_CODE , COUNT(*) 
+FROM EMPLOYEE
+GROUP BY ROLLUP (DEPT_CODE , JOB_CODE)
+ORDER BY 1;
+
+
+
+/* CUBE
+ GROUP BY 절에 작성된 모든 컬럼의 중간 집계를 처리 */
+
+SELECT DEPT_CODE , JOB_CODE , COUNT(*) 
+FROM EMPLOYEE
+GROUP BY CUBE (DEPT_CODE , JOB_CODE)
+ORDER BY 1;
+
+
+
+--------------------------------------------------------------------------
+
+/* SET OPERATOR(집합 연산자)
+
+- 여러 SELECT의 결과(RESULT SET)를 하나의 결과로 만드는 연산자
+ 
+- UNION(합집합) : 두 SELECT구문의 결과가 중복되는 부분(공통)만 결과로 추출
+  
+- INTERSECT(교집합) : 두 SELECT구문의 결과를 '중복 제거'하고 하나로 합침
+
+- UNION ALL : 두 SELECT구문의 결과를 '중복 포함'하여 하나로 합침 
+			  UNION + INTERSECT
+ 
+- MINUS(차집합) : A에서 A, B 교집합 부분을 제거하고 조회  
+
+!!주의사항!! 
+집합 연산자를 사용하기 위한 SELECT문들의 조회하는 컬럼의 타입, 개수가 모두 동일해야한다!
+
+*/
+
+
+-- 부서코드가 D5인 사원의 사번, 이름, 부서코드, 급여
+SELECT EMP_ID , EMP_NAME , DEPT_CODE , SALARY 
+FROM EMPLOYEE 
+WHERE DEPT_CODE = 'D5';
+
+-- 급여가 300만 초과인 사원의 사번, 이름, 부서코드, 급여
+SELECT EMP_ID , EMP_NAME , DEPT_CODE , SALARY 
+FROM EMPLOYEE
+WHERE SALARY > 3000000;
+
+
+
+-- UNION (중복 제거 합집합) 12행
+SELECT EMP_ID , EMP_NAME , DEPT_CODE , SALARY 
+FROM EMPLOYEE 
+WHERE DEPT_CODE = 'D5'
+UNION 
+SELECT EMP_ID , EMP_NAME , DEPT_CODE , SALARY 
+FROM EMPLOYEE
+WHERE SALARY > 3000000;
+
+-- UNION ALL (중복 포함 합집합) 14행
+SELECT EMP_ID , EMP_NAME , DEPT_CODE , SALARY 
+FROM EMPLOYEE 
+WHERE DEPT_CODE = 'D5'
+UNION ALL 
+SELECT EMP_ID , EMP_NAME , DEPT_CODE , SALARY 
+FROM EMPLOYEE
+WHERE SALARY > 3000000;
+
+-- INTERSECT 2행
+SELECT EMP_ID , EMP_NAME , DEPT_CODE , SALARY 
+FROM EMPLOYEE 
+WHERE DEPT_CODE = 'D5'
+INTERSECT 
+SELECT EMP_ID , EMP_NAME , DEPT_CODE , SALARY 
+FROM EMPLOYEE
+WHERE SALARY > 3000000;
+
+-- MINUS 4행
+-- 두 SELECT 구의 중복된 데이터를 빼고, 앞의 데이터만 추출
+SELECT EMP_ID , EMP_NAME , DEPT_CODE , SALARY 
+FROM EMPLOYEE 
+WHERE DEPT_CODE = 'D5'
+MINUS
+SELECT EMP_ID , EMP_NAME , DEPT_CODE , SALARY 
+FROM EMPLOYEE
+WHERE SALARY > 3000000;
+
+
+-- 합집합의 활용 
+-- 서로 다른 테이블이지만 컬럼의 타입, 개수만 일치하면 집합 연산자 사용가능
+SELECT EMP_ID, EMP_NAME FROM EMPLOYEE
+UNION
+SELECT DEPT_ID, DEPT_TITLE FROM DEPARTMENT;
