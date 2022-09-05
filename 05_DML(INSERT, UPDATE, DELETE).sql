@@ -8,8 +8,12 @@
 CREATE TABLE EMPLOYEE2 AS SELECT * FROM EMPLOYEE;
 CREATE TABLE DEPARTMENT2 AS SELECT * FROM DEPARTMENT;
 
+DROP TABLE DEPARTMENT2;
+
 SELECT * FROM EMPLOYEE2;
 SELECT * FROM DEPARTMENT2;
+
+
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -76,46 +80,68 @@ INSERT INTO EMP_01
  SELECT * FROM EMP_01;
 --------------------------------------------------------------------------------------------------------------------
 
--- 2. UPDATE
+/* 2. UPDATE
+ 
+ - 테이블에 기록된 컬럼의 값을 '수정'하는 구문
+ - 내용을 바꾸거나 추가해서 새롭게 함
+  
+ [작성법]
+  UPDATE 테이블명 SET 컬럼명 = 바꿀 값 
+  [WHERE 컬럼명 비교연산자 비교값];
+  --> WHERE 조건이 없을 경우 전체 컬럼이 바꿀 값으로 변경
+ 
+ */
 
--- 테이블에 기록된 컬럼의 값을 수정하는 구문
-
--- [작성법]
--- UPDATE 테이블명 SET 컬럼명 = 바꿀값 [WHERE 컬럼명 비교연산자 비교값];
 
 -- DEPARTMENT2 테이블에서 DEPT_ID가 'D9'인 부서 정보 조회
-
+SELECT *
+FROM DEPARTMENT2  
+WHERE DEPT_ID = 'D9';
 
 -- DEPARTMENT2 테이블에서 DEPT_ID가 'D9'인 행의 DEPT_TITLE을 '전략기획팀' 으로 수정
 
+UPDATE DEPARTMENT2
+SET DEPT_TITLE = '전략기획팀'
+WHERE DEPT_ID ='D9';
+
 
 -- UPDATE 확인
+SELECT *
+FROM DEPARTMENT2;
+
+COMMIT;
 
 
+-- EMPLOYEE2 테이블에서 BONUS를 받지 않는 사원의 BONUS를 0.1로 변경
 
+UPDATE EMPLOYEE2 
+SET BONUS = 0.1
+WHERE BONUS IS NULL;
 
--- EMP_SALARY 테이블에서 BONUS를 받지 않는 사원의 
--- BONUS를 0.1로 변경
+SELECT EMP_NAME, BONUS FROM EMPLOYEE2;
 
-
-
----------------------------------------
+------------------------------------------------------------------------------
 
 -- * 조건절을 설정하지 않고 UPDATE 구문 실행 시 모든 행의 컬럼 값 변경.
+UPDATE DEPARTMENT2 
+SET DEPT_TITLE = '기술연구팀';
 
+SELECT * FROM DEPARTMENT2;
+ROLLBACK;
 
-
-
----------------------------------------
-
-
+------------------------------------------------------------------------------
 
 -- * 여러 컬럼을 한번에 수정할 시 콤마(,)로 컬럼을 구분하면됨.
 -- D9 / 전략기획팀  -> D0 / 전략기획2팀으로 수정
 
+UPDATE DEPARTMENT2 
+SET DEPT_ID = 'D0', DEPT_TITLE = '전략기획2팀' -- WHERE절 직전 컬럼 작성 후 콤마 X 
+WHERE DEPT_ID = 'D9' AND DEPT_TITLE = '전략기획팀';
 
+SELECT * FROM DEPARTMENT2;
 
----------------------------------------
+------------------------------------------------------------------------------
+------------------------------------------------------------------------------
 
 -- * UPDATE시에도 서브쿼리를 사용 가능
 
@@ -123,13 +149,29 @@ INSERT INTO EMP_01
 -- UPDATE 테이블명
 -- SET 컬럼명 = (서브쿼리)
 
--- EMPLOYEE2 테이블에서
--- 평상시 유재식 사원을 부러워하던 방명수 사원의
--- 급여와 보너스율을 유재식 사원과 동일하게 변경해 주기로 했다.
+-- EMPLOYEE2 테이블에서 유재식 사원을 부러워하던 
+-- 방명수 사원의 급여와 보너스율을 
+-- 유재식 사원과 동일하게 변경해 주기로 했다.
 -- 이를 반영하는 UPDATE문을 작성하시오.
 
-   
----------------------------------------
+-- 유재식 급여
+SELECT SALARY FROM EMPLOYEE2 WHERE EMP_NAME = '유재식';
+-- 유재식 보너스
+SELECT BONUS FROM EMPLOYEE2 WHERE EMP_NAME = '유재식';
+
+-- 방명수 급여, 보너스 수정
+UPDATE EMPLOYEE2 SET
+SALARY = (SELECT SALARY FROM EMPLOYEE2 WHERE EMP_NAME = '유재식'),
+BONUS = (SELECT BONUS FROM EMPLOYEE2 WHERE EMP_NAME = '유재식')
+WHERE EMP_NAME = '방명수';
+
+-- 변경된 테이블 조회
+SELECT EMP_NAME, SALARY, BONUS
+FROM EMPLOYEE2 
+WHERE EMP_NAME IN('방명수','유재식');
+
+------------------------------------------------------------------------------
+------------------------------------------------------------------------------
 
 
 -- * 다중행 다중열 서브쿼리를 이용한 UPDATE문
@@ -156,28 +198,34 @@ INSERT INTO EMP_01
 
 --------------------------------------------------------------------------------------------------------------------
 
--- 3. MERGE(병합) (참고만 하세요!)
+/* 3. MERGE(병합) (참고만 하세요!)
+ 
+ - 구조가 같은 두 개의 테이블을 하나로 합치는 기능.
+ - 테이블에서 지정하는 조건의 값이 존재하면 UPDATE
+ - 조건의 값이 없으면 INSERT
+ 
+ */
 
--- 구조가 같은 두 개의 테이블을 하나로 합치는 기능.
--- 테이블에서 지정하는 조건의 값이 존재하면 UPDATE
--- 조건의 값이 없으면 INSERT됨
 
 CREATE TABLE EMP_M01
 AS SELECT * FROM EMPLOYEE;
 
+SELECT * FROM EMP_M01; -- EMP_M01 : 23명
+
 CREATE TABLE EMP_M02
 AS SELECT * FROM EMPLOYEE
    WHERE JOB_CODE = 'J4';
+  
+SELECT * FROM EMP_M02; -- EMP_M02 : 4명
    
 INSERT INTO EMP_M02
 VALUES (999, '곽두원', '561016-1234567', 'kwack_dw@kh.or.kr',
         '01011112222', 'D9', 'J4', 'S1', 9000000, 0.5, NULL,
-        SYSDATE, NULL, DEFAULT);
-       
-SELECT * FROM EMP_M01; 
-SELECT * FROM EMP_M02;
+        SYSDATE, NULL, DEFAULT); 
 
-UPDATE EMP_M02 SET SALARY = 0;
+SELECT * FROM EMP_M02; -- EMP_M02 : 기존 4명 + 신규1명
+
+UPDATE EMP_M02 SET SALARY = 0; --> EMP_M02 급여를 0원으로 변경
 
 SELECT * FROM EMP_M02;
 
@@ -209,31 +257,51 @@ SELECT * FROM EMP_M01;
 
 --------------------------------------------------------------------------------------------------------------------
 
--- 4. DELETE
--- 테이블의 행을 삭제하는 구문
+/* 4. DELETE
+ - 테이블의 '행을 삭제'하는 구문
+ - 한 행 한 행 삭제하기 때문에 시간이 오래 걸리는 편
+ 
+  [작성법]
+   DELTE FROM 테이블명 WHERE 조건설정
+  -> 만약 WHERE 조건을 설정하지 않으면 모든 행이 다 삭제
+ 
+ */
 
--- [작성법]
--- DELTE FROM 테이블명 WHERE 조건설정
--- 만약 WHERE 조건을 설정하지 않으면 모든 행이 다 삭제됨
 
 COMMIT;
 
 -- EMPLOYEE2 테이블에서 '장채현'사원 정보 조회
+SELECT * FROM EMPLOYEE2 WHERE EMP_NAME = '장채현';
+
 
 -- EMPLOYEE2 테이블에서 이름이 '장채현'인 사원 정보 삭제
+DELETE FROM EMPLOYEE2 
+WHERE EMP_NAME = '장채현';
 
 -- 삭제 확인
+SELECT * FROM EMPLOYEE2 WHERE EMP_NAME = '장채현';
+
+ROLLBACK; --> 삭제 결과 이전으로 되돌려 데이터 존재
+
 
 -- EMPLOYEE2 테이블 전체 삭제
-
+DELETE FROM EMPLOYEE2; --> WHERE절 미작성 시 전체 삭제(24행 삭제)
+					
+SELECT * FROM EMPLOYEE2; 
+ROLLBACK;
 
 ---------------------------------------------------------------------------------------------
 
-
--- 5. TRUNCATE (DDL 입니다! DML 아닙니다!)
--- 테이블의 전체 행을 삭제하는 DDL
--- DELETE보다 수행속도가 더 빠르다.
--- ROLLBACK을 통해 복구할 수 없다.
+/* 5. TRUNCATE (DDL)
+ 
+ - 테이블의 전체 행을 삭제
+ - DELETE보다 수행속도가 더 빠르지만,
+   ROLLBACK을 통해 복구 불가!!
+    
+  DELETE : 휴지통 버리기
+  TRUNCATE : 완전 삭제
+  
+ */
 
 -- TRUNCATE 테스트용 테이블 생성
 CREATE TABLE EMPLOYEE3
@@ -260,5 +328,5 @@ TRUNCATE TABLE EMPLOYEE3;
 SELECT * FROM EMPLOYEE3;
 
 ROLLBACK;
--- 롤백 후 복구 확인 -> 복구 안됨을 확인!
+-- 롤백 후 복구 확인 -> 복구 안됨!!!!!
 SELECT * FROM EMPLOYEE3;
