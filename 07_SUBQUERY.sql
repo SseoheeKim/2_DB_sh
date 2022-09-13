@@ -1,14 +1,13 @@
-/*
-    * SUBQUERY (서브쿼리)
+/*   SUBQUERY (서브쿼리)
     - 하나의 SQL문 안에 포함된 또다른 SQL문 ---> 'SELECT문'
     - 메인쿼리(기존쿼리)를 위해 보조 역할을 하는 쿼리문
     - SELECT, FROM, WHERE, HAVGIN 절에서 사용가능
 
-	- 일반SQL > SUBQUERY > JOIN 순서로 빠름
-*/  
+	- 일반SQL > SUBQUERY > JOIN 순서로 빠름 */  
 
 -- 서브쿼리 예시 1.
 -- 부서코드가 노옹철사원과 같은 소속의 직원의 이름, 부서코드 조회하기
+SELECT * FROM EMPLOYEE; 
 
 -- 1) 사원명이 노옹철인 사람의 부서코드 조회
 SELECT DEPT_CODE 
@@ -29,29 +28,27 @@ WHERE DEPT_CODE = (SELECT DEPT_CODE
 			       WHERE EMP_NAME = '노옹철');
                    
                    
-			      
-                   
 -- 서브쿼리 예시 2.
 -- 전 직원의 평균 급여 이상으로 많은 급여를 받고 있는 직원의 
 -- 사번, 이름, 직급코드, 급여 조회
-
+	      
+			      
 -- 1) 전 직원의 평균 급여 조회하기
 SELECT CEIL(AVG(SALARY))
-FROM EMPLOYEE; -- 2822557
+FROM EMPLOYEE; -- 3047663
 
--- 2) 직원들중 급여가 2822557원 이상인 사원들의 사번, 이름, 직급코드, 급여 조회
+-- 2) 직원들중 급여가 3047663원 이상인 사원들의 사번, 이름, 직급코드, 급여 조회
 SELECT EMP_ID, EMP_NAME, DEPT_CODE, SALARY 
 FROM EMPLOYEE 
-WHERE SALARY >= 2822557;
+WHERE SALARY >= 3047663;
 
 -- 3) 전 직원의 평균 급여보다 많은 급여를 받고 있는 직원 조회
 --> 위의 2단계를 하나의 쿼리로 가능하다!! --> 1) 쿼리문을 서브쿼리로!!
 SELECT EMP_ID, EMP_NAME, DEPT_CODE, SALARY 
 FROM EMPLOYEE 
 WHERE SALARY >= (SELECT CEIL(AVG(SALARY))
-				FROM EMPLOYEE );
+				FROM EMPLOYEE);
                  
-
 
 -------------------------------------------------------------------
 
@@ -71,9 +68,7 @@ WHERE SALARY >= (SELECT CEIL(AVG(SALARY))
                      
     - 스칼라 서브쿼리 : 상관 쿼리이면서 결과 값이 하나인 서브쿼리
     
-   * 서브쿼리 유형에 따라 서브쿼리 앞에 붙은 연산자가 다름
-    
-*/
+   * 서브쿼리 유형에 따라 서브쿼리 앞에 붙은 연산자가 다름  */
 
 
 -- 1. 단일행 서브쿼리 (SINGLE ROW SUBQUERY)
@@ -82,8 +77,17 @@ WHERE SALARY >= (SELECT CEIL(AVG(SALARY))
 --    <, >, <=, >=, =, !=/^=/<>
 
 
--- EX) 전 직원의 급여 평균보다 많은 급여를 받는 직원의 
--- 이름, 직급, 부서, 급여 조회 (단, 직급 순으로 정렬)
+-- EX) 전 직원의 급여 평균보다 많은(초과) 급여를 받는 직원의 
+--    이름, 직급, 부서, 급여 조회 (단, 직급 순으로 정렬)
+SELECT EMP_NAME, JOB_NAME, DEPT_TITLE, SALARY
+FROM EMPLOYEE
+JOIN JOB USING(JOB_CODE)
+LEFT JOIN DEPARTMENT ON (DEPT_CODE = DEPT_ID)
+WHERE SALARY > (SELECT AVG(SALARY) FROM EMPLOYEE)
+ORDER BY JOB_CODE DESC;
+			
+			
+			
 		
 SELECT EMP_NAME, JOB_NAME, DEPT_TITLE, SALARY 
 FROM EMPLOYEE
