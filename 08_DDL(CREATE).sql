@@ -14,7 +14,7 @@ SELECT * FROM USER_TABLES;
 -- DQL(DATA QUARY LANGUAGE) : 데이터 질의(조회)언어
 
 -- DML(DATA MANIPULATION LANGUAGE) : 데이터 삽입, 수정, 삭제하는 언어
--- DDL(DATA DEFINITION LANGUAGE) : 데이터 테이블 객체를 생성, 수정, 삭제하는 등 정의 언어
+-- DDL(DATA DEFINITION LANGUAGE) : 테이블 등의 객체를 생성, 수정, 삭제하는 등 정의 언어
 -- DCL(DATA CONTROL LANGUAGE) : 데이터 권한을 부여하거나 제한하는 언어
 
 -- TCL(Transaction Control Language) : DML 수행 내용을 COMMIT, ROLLBACK하는 언어
@@ -36,11 +36,6 @@ SELECT * FROM USER_TABLES;
 
 
 --------------------------------------------------------------------------------------------------------------------
-
--- CREATE
-
--- 테이블이나 인덱스, 뷰 등 다양한 데이터베이스 '객체를 생성'하는 구문
--- 테이블로 생성된 객체는 DROP 구문을 통해 제거 할 수 있음 
 
 
 /* 테이블이란?
@@ -78,11 +73,19 @@ SELECT * FROM USER_TABLES;
  
  -  CLOB : 대용량 문자 데이터 (4GB) -> 문자만 4GB 저장
 
+
+ ----------------------------------------------------------------------------------
+ - SQL작성법 : 대문자 작성 권장, 연결단어는 "_"(언더바)사용
+ - 문자인코딩 UTF-8에 따라서 영어/숫자는 1BYTE,  한글/특수문자 등은 3BYTE취급
+ 
 */
 
 
--- MEMBER 테이블 생성
+-- 1.CREATE
+-- 테이블이나 인덱스, 뷰 등 다양한 데이터베이스 '객체를 생성'하는 구문
+-- 테이블로 생성된 객체는 DROP 구문을 통해 제거 할 수 있음 
 
+-- MEMBER 테이블 생성
 CREATE TABLE "MEMBER" (
 	MEMBER_ID VARCHAR2(20),
 	MEMBER_PWD VARCHAR2(20),
@@ -92,19 +95,14 @@ CREATE TABLE "MEMBER" (
 );
 
 
--- SQL작성법 : 대문자 작성 권장, 연결단어는 "_"(언더바)사용
--- 문자인코딩 UTF-8에 따라서 영어/숫자는 1BYTE,  한글/특수문자 등은 3BYTE취급
-
 -- 만든 테이블 확인
 SELECT * FROM "MEMBER";
 
+-- 테이블 삭제
 DROP TABLE "MEMBER";
 
-
 -- 2. 컬럼에 '주석' 달기
--- [표현식]
--- COMMENT ON COLUMN 테이블명.컬럼명 IS '주석내용';
-
+-- [표현식] COMMENT ON COLUMN 테이블명.컬럼명 IS '주석내용';
 COMMENT ON COLUMN MEMBER.MEMBER_ID IS '회원 아이디';
 COMMENT ON COLUMN MEMBER.MEMBER_PWD IS '회원 비밀번호';
 COMMENT ON COLUMN MEMBER.MEMBER_NAME IS '회원 이름';
@@ -112,8 +110,7 @@ COMMENT ON COLUMN MEMBER.MEMBER_SSN IS '회원 주민등록번호';
 COMMENT ON COLUMN MEMBER.ENROLL_DATE IS '회원 가입일';
 
 
--- USER_TABLES : 사용자가 작성한 테이블을 확인하는 뷰
--- 데이터 딕셔너리에 정의되어 있음
+-- USER_TABLES : 사용자가 작성한 테이블을 확인하는 (데이터 딕셔너리에 정의된) 뷰
 SELECT * FROM USER_TABLES;
 
 
@@ -152,7 +149,7 @@ COMMIT;
 
 --------------------------------------------------------------------------------------------------------------------
 
--- "NUMBER" 타입 컬럼의 문제점
+-- ** NUMBER 타입 컬럼의 문제점 **
 
 -- MEMBER2테이블 생성(아이디, 비밀번호, 이름, 전화번호)
 CREATE TABLE MEMBER2 (
@@ -162,11 +159,13 @@ CREATE TABLE MEMBER2 (
 	MEMBER_TEL NUMBER
 );
 
+-- MEMBER2테이블 확인 
 SELECT * FROM MEMBER2;
 
+-- MEMBER2테이블 내 데이터 삽입
 INSERT INTO MEMBER2 VALUES('MEM01', 'PASS01', '고길동', 7712345612);
 INSERT INTO MEMBER2 VALUES('MEM02', 'PASS02', '고길순', 01012345678);
---> NUMBER타입 컬럼에 데이터를 삽입할 때 맨 앞에 0이 있으면 이를 자동으로 제거
+--> NUMBER타입 컬럼에 데이터를 삽입할 때 맨 앞에 0이 있으면 이를 자동 제거하여 나타남
  ---> 전화번호, 주민등록번호처럼 숫자로만 되어있는 데이터이더라도
  ----  0으로 시작할 가능성이 있다면 CHAR, VARCHAR2와 같은 문자형을 사용  
 
@@ -177,34 +176,45 @@ INSERT INTO MEMBER2 VALUES('MEM02', 'PASS02', '고길순', 01012345678);
 /* 제약 조건(CONSTRAINTS)
    
  - 사용자가 원하는 조건의 데이터만 유지하기 위해서 특정 컬럼에 설정하는 제약.
-   데이터 무결성 보장을 목적으로 함.
-   -> 중복 데이터 제거
+   "데이터 무결성 보장" 목적 -> 중복 데이터 제거
 
     + 입력 데이터에 문제가 없는지 자동으로 검사하는 목적
     + 데이터의 수정/삭제 가능여부 검사등을 목적으로 함 
         --> 제약조건을 위배하는 DML 구문은 수행할 수 없음!
     
-    ** 제약조건 종류
+ 
+ *** 제약조건 종류 **
     NOT NULL, UNIQUE, PRIMARY KEY, CHECK, FOREIGN KEY.
     
 */
 
+
+
+/* ** 제약조건명 지정 방법 **
+ 1) 컬럼 레벨 : 테이블 생성 시 컬럼을 정의하는 부분에 작성
+				[CONSTRAINT 제약조건명] 제약조건
+
+ 2) 테이블 레벨 : 테이블 생성 시 컬럼 정의가 끝난 후, 마지막에 작성!!
+ 				[CONSTRAINT 제약조건명] 제약조건(컬럼명)		   	 */
+
+--------------------------------------------------------------------------------------------------------------------
+
 -- 제약 조건 확인
--- USER_CONSTRAINTS : 사용자가 작성한 제약조건을 확인 하는 딕셔너리 뷰 
+-- USER_CONSTRAINTS : 사용자가 작성한 제약조건을 확인하는 딕셔너리 뷰 
 DESC USER_CONSTRAINTS;
 SELECT * FROM USER_CONSTRAINTS;
 
--- USER_CONS_COLUMNS : 제약조건이 걸려 있는 컬럼을 확인 하는 딕셔너리 뷰 
+-- USER_CONS_COLUMNS : 제약조건이 걸려 있는 컬럼을 확인하는 딕셔너리 뷰 
 DESC USER_CONS_COLUMNS;
 SELECT * FROM USER_CONS_COLUMNS;
 
-
+--------------------------------------------------------------------------------------------------------------------
 
 -- 1. NOT NULL 
 -- 컬럼레벨에서만 사용가능한 제약 조건
 -- 해당 컬럼에 반드시 값이 기록되어야 하는 경우 사용
 -- 삽입/수정시 NULL값을 허용하지 않도록 컬럼레벨에서 제한
--- 대부분의 경우는 NULL을 허용 X
+-- 대부분의 경우는 NULL을 허용하지 X
 
 
 CREATE TABLE USER_USED_NN(
@@ -235,16 +245,6 @@ VALUES(NULL, NULL, NULL, NULL, NULL, '010-1234-5678', 'hong123@kh.or.kr');
 -- 단, UNIQUE 제약 조건이 설정된 컬럼에 NULL값은 중복 삽입 가능.
 
 
-
--- 컬럼 레벨 : 테이블 생성 시 컬럼을 정의하는 부분에 작성
--- 테이블 레벨 : 테이블 생성 시 컬럼 정의가 끝난 후, 마지막에 작성!!
-
-
--- ** 제약조건명 지정 방법 **
--- 1) 컬럼 레벨 : [CONSTRAINT 제약조건명] 제약조건
--- 2) 테이블 레벨 : [CONSTRAINT 제약조건명] 제약조건(컬럼명)
-
-
 -- UNIQUE 제약 조건 테이블 생성
 CREATE TABLE USER_USED_UK(
     USER_NO NUMBER,
@@ -261,6 +261,7 @@ CREATE TABLE USER_USED_UK(
  	CONSTRAINT USER_ID_U UNIQUE(USER_ID) -- 테이블 레벨에서 제한(제약조건명 지정)
 );
 
+SELECT * FROM USER_USED_UK;
 DROP TABLE USER_USED_UK; -- 테이블 삭제
 
 INSERT INTO USER_USED_UK
@@ -329,12 +330,11 @@ VALUES(2, 'user02', 'pass01', '홍길동', '남', '010-1234-5678', 'hong123@kh.o
 INSERT INTO USER_USED_UK2
 VALUES(3, 'user01', 'pass01', '고길동', '남', '010-1234-5678', 'hong123@kh.or.kr');
 
-
 INSERT INTO USER_USED_UK2
 VALUES(4, 'user01', 'pass01', '홍길동', '남', '010-1234-5678', 'hong123@kh.or.kr');
 --> ORA-00001: 무결성 제약 조건(KH_KSH.USER_ID_NAME_U)에 위배됩니다
 
-SELECT * FROM USER_USED_UK2; --> 3행 삽입 
+SELECT * FROM USER_USED_UK2; 
 
 
 ----------------------------------------------------------------------------------------------------------------
@@ -431,6 +431,8 @@ VALUES(NULL, 'user01', 'pass01', '신사임당', '여', '010-9999-9999', 'sin123
 --   참조할 테이블의 참조할 컬럼명이 생략되면 PRIMARY KEY로 설정된 컬럼이 자동으로 참조할 컬럼
 
 
+DROP TABLE USER_GRADE;
+
 CREATE TABLE USER_GRADE(
   GRADE_CODE NUMBER PRIMARY KEY,
   GRADE_NAME VARCHAR2(30) NOT NULL
@@ -478,8 +480,7 @@ SELECT * FROM USER_USED_FK;
 
 INSERT INTO USER_USED_FK
 VALUES(5, 'user05', 'pass05', '윤봉길', '남', '010-6666-1234', 'yoon123@kh.or.kr', 50);
---> 50이라는 값은 USER_GRADE 테이블 GRADE_CODE 컬럼에서 제공하는 값이 아니므로
- -- 외래키 제약 조건에 위배되어 오류 발생
+--> 50이라는 값은 USER_GRADE 테이블 GRADE_CODE 컬럼에서 제공하는 값이 아니므로 외래키 제약 조건에 위배되어 오류 발생
 -- ORA-02291: 무결성 제약조건(KH_KSH.GRADE_CODE_FK)이 위배되었습니다- 부모 키가 없습니다
 
 
@@ -512,12 +513,13 @@ CREATE TABLE USER_GRADE2(
   GRADE_NAME VARCHAR2(30) NOT NULL
 );
 
+
 INSERT INTO USER_GRADE2 VALUES (10, '일반회원');
 INSERT INTO USER_GRADE2 VALUES (20, '우수회원');
 INSERT INTO USER_GRADE2 VALUES (30, '특별회원');
 
 
--- ON DELETE SET NUL 삭제 옵션이 적용된 테이블 생성
+-- ON DELETE SET NULL 삭제 옵션이 적용된 테이블 생성
 CREATE TABLE USER_USED_FK2(
   USER_NO NUMBER PRIMARY KEY,
   USER_ID VARCHAR2(20) UNIQUE,
@@ -551,8 +553,6 @@ SELECT * FROM USER_USED_FK2;
 -- 부모 테이블인 USER_GRADE2에서 GRADE_CODE =10 삭제
 DELETE FROM USER_GRADE2 WHERE GRADE_CODE = 10;
 --> ON DELETE SET NULL 옵션이 설정되어 있어 오류 없이 삭제되어 컬럼값이 NULL로 변경
-
-
 
 
 
@@ -754,8 +754,6 @@ SELECT * FROM EMPLOYEE_COPY2;
 -- 제약조건, 코멘트는 복사되지 않기 때문에 별도 추가작업이 필요!!
 
 
-
-
 -- 9. 제약조건 추가
 -- ALTER TABLE 테이블명 ADD [CONSTRAINT 제약조건명] PRIMARY KEY(컬럼명)
 -- ALTER TABLE 테이블명 ADD [CONSTRAINT 제약조건명] 
@@ -773,30 +771,48 @@ JOIN USER_CONS_COLUMNS C2 USING(CONSTRAINT_NAME)
 WHERE C1.TABLE_NAME = 'EMPLOYEE_COPY';
 
 -- NOT NULL 제약 조건만 복사된 EMPLOYEE_COPY 테이블에
--- EMP_ID 컬럼에 PRIMARY KEY 제약조건 추가
+-- EMP_ID 컬럼에 PRIMARY KEY 제약조건 추가!!!!!!!!!
 ALTER TABLE EMPLOYEE_COPY ADD CONSTRAINT PK_EMP_COPY PRIMARY KEY(EMP_ID);
 
 
--- * 수업시간에 활용하던 테이블에는 FK 제약조건 없는상태이므로 추가!!
+-- * 수업시간에 활용하던 테이블에는 FK 제약조건 없는 상태이므로 추가!!
 
 
 -- EMPLOYEE테이블의 DEPT_CODE에 외래키 제약조건 추가
 -- 참조 테이블은 DEPARTMENT, 참조 컬럼은 DEPARTMENT의 기본키
 
+-- ALTER TABLE 테이블명 ADD [CONSTRAINT 제약조건명] 
+--  FOREIGN KEY(컬럼명) REFERENCES 참조 테이블명(참조컬럼명)
+
+
+-- EMPLOYEE테이블의 DEPT_CODE에 외래키 제약조건 추가
+-- 참조 테이블은 DEPARTMENT, 참조 컬럼은 DEPARTMENT의 기본키
+ALTER TABLE EMPLOYEE ADD CONSTRAINT EMP_DEPT_CODE
+FOREIGN KEY(DEPT_CODE) REFERENCES DEPARTMENT ON DELETE SET NULL;
+                                              /*PK 컬럼 참조*/
+
 
 -- EMPLOYEE테이블의 JOB_CODE 외래키 제약조건 추가
 -- 참조 테이블은 JOB, 참조 컬럼은 JOB의 기본키
+ALTER TABLE EMPLOYEE ADD CONSTRAINT EMP_JOB_CODE
+FOREIGN KEY(JOB_CODE) REFERENCES JOB ON DELETE SET NULL;
+
 
 
 -- EMPLOYEE테이블의 SAL_LEVEL 외래키 제약조건 추가
 -- 참조 테이블은 SAL_GRADE, 참조 컬럼은 SAL_GRADE의 기본키
+ALTER TABLE EMPLOYEE ADD CONSTRAINT EMP_SAL_LEVEL
+FOREIGN KEY(SAL_LEVEL) REFERENCES SAL_GRADE ON DELETE SET NULL;
 
 
 -- DEPARTMENT테이블의 LOCATION_ID에 외래키 제약조건 추가
 -- 참조 테이블은 LOCATION, 참조 컬럼은 LOCATION의 기본키
+ALTER TABLE DEPARTMENT ADD CONSTRAINT DEPT_LOCATION_ID
+FOREIGN KEY(LOCATION_ID) REFERENCES LOCATION ON DELETE SET NULL;
 
 
 -- LOCATION테이블의 NATIONAL_CODE에 외래키 제약조건 추가
 -- 참조 테이블은 NATIONAL, 참조 컬럼은 NATIONAL의 기본키
-
+ALTER TABLE LOCATION ADD CONSTRAINT LOC_NATIONAL_CODE
+FOREIGN KEY(NATIONAL_CODE) REFERENCES NATIONAL ON DELETE SET NULL;
 
