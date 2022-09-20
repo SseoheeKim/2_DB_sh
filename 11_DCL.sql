@@ -60,7 +60,7 @@ ALTER SESSION SET "_ORACLE_SCRIPT" = TRUE;
 CREATE USER ksh_sample IDENTIFIED BY sample1234;
 
 -- 2. 새 연결(접속 방법)추가
--- 새 데이터베이스 연결에서 ORA-01045 : CREATE SESSOIO 권한이 없어서 로그인 실패
+-- 새 데이터베이스 연결에서 ORA-01045 : CREATE SESSOION 권한이 없어서 로그인 실패
 
 -- 3. [접속 권한 부여 작성법]
 -- GRANT 권한, 권한, ... TO 사용자명;
